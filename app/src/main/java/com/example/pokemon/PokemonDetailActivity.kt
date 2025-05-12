@@ -1,11 +1,14 @@
 package com.example.pokemon
 
 import android.os.Bundle
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.launch
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -14,6 +17,12 @@ class PokemonDetailActivity : AppCompatActivity() {
     private lateinit var imageView: ImageView
     private lateinit var nameTextView: TextView
     private lateinit var typesTextView: TextView
+    private lateinit var btnAdd: Button
+
+    private var currentPokemonId: Int = -1
+    private var currentPokemonName: String = ""
+    private var currentPokemonImageUrl: String = ""
+    private var currentPokemonTypes: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,11 +31,11 @@ class PokemonDetailActivity : AppCompatActivity() {
         imageView = findViewById(R.id.pokemonImage)
         nameTextView = findViewById(R.id.pokemonName)
         typesTextView = findViewById(R.id.pokemonTypes)
+        btnAdd = findViewById(R.id.btnAdd)
 
         val pokemonUrl = intent.getStringExtra("pokemon_url")
-        val pokemonName = intent.getStringExtra("pokemon_name")?.replaceFirstChar { it.uppercase() }
-
-        nameTextView.text = pokemonName ?: "Unknown"
+        currentPokemonName = intent.getStringExtra("pokemon_name")?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+        nameTextView.text = currentPokemonName
 
         if (pokemonUrl == null) {
             Toast.makeText(this, "URL покемона не передан", Toast.LENGTH_SHORT).show()
@@ -35,6 +44,14 @@ class PokemonDetailActivity : AppCompatActivity() {
         }
 
         fetchPokemonDetails(pokemonUrl)
+
+        btnAdd.setOnClickListener {
+            if (currentPokemonId != -1) {
+                savePokemonToDb()
+            } else {
+                Toast.makeText(this, "Данные покемона не загружены", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun fetchPokemonDetails(url: String) {
@@ -45,8 +62,6 @@ class PokemonDetailActivity : AppCompatActivity() {
 
         val service = retrofit.create(PokeApiService::class.java)
 
-        // Путь в URL вида https://pokeapi.co/api/v2/pokemon/{id}/
-        // Нам нужно получить endpoint после baseUrl, например "pokemon/25/"
         val endpoint = url.removePrefix("https://pokeapi.co/api/v2/")
 
         service.getPokemonDetails(endpoint).enqueue(object : Callback<PokemonDetails> {
@@ -54,15 +69,19 @@ class PokemonDetailActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val details = response.body()
                     details?.let {
-                        val spriteUrl = it.sprites.front_default
+                        currentPokemonId = extractIdFromUrl(url)
+                        currentPokemonImageUrl = it.sprites.front_default ?: ""
+                        currentPokemonTypes = it.types.joinToString(", ") { typeSlot ->
+                            typeSlot.type.name.replaceFirstChar { c -> c.uppercase() }
+                        }
+
+                        typesTextView.text = "Типы: $currentPokemonTypes"
+
                         Glide.with(this@PokemonDetailActivity)
-                            .load(spriteUrl)
+                            .load(currentPokemonImageUrl)
                             .placeholder(android.R.drawable.progress_indeterminate_horizontal)
                             .error(android.R.drawable.stat_notify_error)
                             .into(imageView)
-
-                        val types = it.types.joinToString(", ") { typeSlot -> typeSlot.type.name.replaceFirstChar { c -> c.uppercase() } }
-                        typesTextView.text = "Типы: $types"
                     }
                 } else {
                     Toast.makeText(this@PokemonDetailActivity, "Ошибка загрузки данных", Toast.LENGTH_SHORT).show()
@@ -73,5 +92,25 @@ class PokemonDetailActivity : AppCompatActivity() {
                 Toast.makeText(this@PokemonDetailActivity, "Ошибка: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
+    }
+
+    private fun extractIdFromUrl(url: String): Int {
+        return url.trimEnd('/').split("/").last().toIntOrNull() ?: -1
+    }
+
+    private fun savePokemonToDb() {
+        val db = AppDatabase.getDatabase(this)
+        val pokemon = SavedPokemon(
+            id = currentPokemonId,
+            name = currentPokemonName,
+            imageUrl = currentPokemonImageUrl,
+            types = currentPokemonTypes
+        )
+        lifecycleScope.launch {
+            db.pokemonDao().insert(pokemon)
+            runOnUiThread {
+                Toast.makeText(this@PokemonDetailActivity, "Покемон добавлен", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
