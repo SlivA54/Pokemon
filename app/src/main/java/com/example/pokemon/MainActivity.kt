@@ -30,16 +30,13 @@ class MainActivity : AppCompatActivity() {
             .build()
         pokeApiService = retrofit.create(PokeApiService::class.java)
 
-        // Настройка RecyclerView для отображения сохранённых покемонов
         recyclerView = findViewById(R.id.savedPokemonsRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = SavedPokemonAdapter()
         recyclerView.adapter = adapter
 
-        // Загрузка сохранённых покемонов из базы данных
-        loadSavedPokemons()
+        loadSavedPokemons() // Подписываемся на поток данных
 
-        // Кнопка для перехода в SearchActivity
         val fab: FloatingActionButton = findViewById(R.id.fab)
         fab.setOnClickListener {
             val intent = Intent(this, SearchActivity::class.java)
@@ -56,12 +53,12 @@ class MainActivity : AppCompatActivity() {
     private fun loadSavedPokemons() {
         val db = AppDatabase.getDatabase(this)
         lifecycleScope.launch {
-            val savedPokemonsList = db.pokemonDao().getAll().first()
-            runOnUiThread {
+            db.pokemonDao().getAll().collect { savedPokemonsList ->
                 adapter.submitList(savedPokemonsList)
             }
         }
     }
+
 
 
 }

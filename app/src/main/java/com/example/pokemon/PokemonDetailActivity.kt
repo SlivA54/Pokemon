@@ -1,5 +1,6 @@
 package com.example.pokemon
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
@@ -8,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
@@ -106,11 +108,18 @@ class PokemonDetailActivity : AppCompatActivity() {
             imageUrl = currentPokemonImageUrl,
             types = currentPokemonTypes
         )
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.IO) {  // Запускаем в IO-потоке
             db.pokemonDao().insert(pokemon)
-            runOnUiThread {
+            // Возвращаемся в главный поток для обновления UI
+            launch(Dispatchers.Main) {
                 Toast.makeText(this@PokemonDetailActivity, "Покемон добавлен", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this@PokemonDetailActivity, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                startActivity(intent)
+                finish()
             }
         }
     }
+
+
 }
