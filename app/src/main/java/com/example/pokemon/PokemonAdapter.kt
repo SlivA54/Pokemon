@@ -8,7 +8,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
-class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.PokemonViewHolder>() {
+class PokemonAdapter(
+    private val onItemClick: (PokemonListItem) -> Unit
+) : RecyclerView.Adapter<PokemonAdapter.PokemonViewHolder>() {
 
     private val items = mutableListOf<PokemonListItem>()
 
@@ -25,7 +27,11 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.PokemonViewHolder>() 
     }
 
     override fun onBindViewHolder(holder: PokemonViewHolder, position: Int) {
-        holder.bind(items[position])
+        val item = items[position]
+        holder.bind(item)
+        holder.itemView.setOnClickListener {
+            onItemClick(item)
+        }
     }
 
     override fun getItemCount(): Int = items.size
@@ -37,8 +43,6 @@ class PokemonAdapter : RecyclerView.Adapter<PokemonAdapter.PokemonViewHolder>() 
         fun bind(item: PokemonListItem) {
             textView.text = item.name.replaceFirstChar { it.uppercase() }
 
-            // Формируем URL картинки покемона по его имени
-            // PokeAPI хранит спрайты по id, но можно получить id из url:
             val id = item.url.trimEnd('/').split("/").last()
             val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
 

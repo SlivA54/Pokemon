@@ -1,5 +1,6 @@
 package com.example.pokemon
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -31,7 +32,14 @@ class SearchActivity : AppCompatActivity() {
         typeSpinner = findViewById(R.id.typeSpinner)
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = PokemonAdapter()
+        adapter = PokemonAdapter { pokemonItem ->
+            val intent = Intent(this, PokemonDetailActivity::class.java)
+            intent.putExtra("pokemon_url", pokemonItem.url)
+            intent.putExtra("pokemon_name", pokemonItem.name)
+            startActivity(intent)
+        }
+        recyclerView.adapter = adapter
+
         recyclerView.adapter = adapter
 
         val retrofit = Retrofit.Builder()
