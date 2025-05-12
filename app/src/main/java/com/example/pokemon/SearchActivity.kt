@@ -1,6 +1,10 @@
 package com.example.pokemon
 
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,61 +17,104 @@ class SearchActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: PokemonAdapter
+    private lateinit var typeSpinner: Spinner
+    private lateinit var searchView: SearchView
+
+    private lateinit var pokeApiService: PokeApiService
+    private val allTypes = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
 
-        val searchView = findViewById<SearchView>(R.id.searchView)
+        searchView = findViewById(R.id.searchView)
+        typeSpinner = findViewById(R.id.typeSpinner)
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = PokemonAdapter()
         recyclerView.adapter = adapter
 
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String): Boolean {
-                if (query.isBlank()) {
-                    Toast.makeText(this@SearchActivity, "Введите имя покемона", Toast.LENGTH_SHORT).show()
-                    return false
-                }
-                performSearch(query.trim().lowercase())
-                searchView.clearFocus() // скрыть клавиатуру
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                // Можно реализовать поиск по мере ввода, если нужно
-                return false
-            }
-        })
-    }
-
-    private fun performSearch(query: String) {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://pokeapi.co/api/v2/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        val service = retrofit.create(PokeApiService::class.java)
+        pokeApiService = retrofit.create(PokeApiService::class.java)
 
-        // Получаем полный список покемонов (limit большой, чтобы получить всех)
-        service.getPokemonList(1118, 0).enqueue(object : Callback<PokemonListResponse> {
-            override fun onResponse(call: Call<PokemonListResponse>, response: Response<PokemonListResponse>) {
+        loadTypes()
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String): Boolean {
+                performSearch(query.trim().lowercase())
+                searchView.clearFocus()
+                return true
+            }
+            override fun onQueryTextChange(newText: String?) = false
+        })
+
+        // Поиск при смене типа
+        typeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>, view: View?, position: Int, id: Long
+            ) {
+                val currentQuery = searchView.query.toString().trim().lowercase()
+                performSearch(currentQuery)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+    }
+
+    private fun loadTypes() {
+        pokeApiService.getTypeList().enqueue(object : Callback<TypeListResponse> {
+            override fun onResponse(call: Call<TypeListResponse>, response: Response<TypeListResponse>) {
                 if (response.isSuccessful) {
-                    val list = response.body()?.results ?: emptyList()
-                    val filtered = list.filter { it.name.contains(query, ignoreCase = true) }
-                    if (filtered.isEmpty()) {
-                        Toast.makeText(this@SearchActivity, "Покемоны не найдены", Toast.LENGTH_SHORT).show()
-                    }
-                    adapter.submitList(filtered)
-                } else {
-                    Toast.makeText(this@SearchActivity, "Ошибка загрузки данных", Toast.LENGTH_SHORT).show()
+                    allTypes.clear()
+                    allTypes.add("Все типы") // опция без фильтра по типу
+                    allTypes.addAll(response.body()?.results?.map { it.name } ?: emptyList())
+                    val adapterSpinner = ArrayAdapter(this@SearchActivity, android.R.layout.simple_spinner_item, allTypes)
+                    adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    typeSpinner.adapter = adapterSpinner
                 }
             }
-
-            override fun onFailure(call: Call<PokemonListResponse>, t: Throwable) {
-                Toast.makeText(this@SearchActivity, "Ошибка: ${t.message}", Toast.LENGTH_SHORT).show()
+            override fun onFailure(call: Call<TypeListResponse>, t: Throwable) {
+                Toast.makeText(this@SearchActivity, "Ошибка загрузки типов", Toast.LENGTH_SHORT).show()
             }
         })
+    }
+
+    private fun performSearch(query: String) {
+        val selectedType = typeSpinner.selectedItem as String
+
+        if (selectedType == "Все типы") {
+            // Поиск только по имени среди всех покемонов
+            pokeApiService.getPokemonList(1118, 0).enqueue(object : Callback<PokemonListResponse> {
+                override fun onResponse(call: Call<PokemonListResponse>, response: Response<PokemonListResponse>) {
+                    if (response.isSuccessful) {
+                        val list = response.body()?.results ?: emptyList()
+                        val filtered = list.filter { it.name.contains(query, ignoreCase = true) }
+                        adapter.submitList(filtered)
+                        if (filtered.isEmpty()) Toast.makeText(this@SearchActivity, "Покемоны не найдены", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                override fun onFailure(call: Call<PokemonListResponse>, t: Throwable) {
+                    Toast.makeText(this@SearchActivity, "Ошибка загрузки покемонов", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } else {
+            // Поиск по выбранному типу
+            pokeApiService.getPokemonByType(selectedType).enqueue(object : Callback<TypeDetailResponse> {
+                override fun onResponse(call: Call<TypeDetailResponse>, response: Response<TypeDetailResponse>) {
+                    if (response.isSuccessful) {
+                        val pokemonsByType = response.body()?.pokemon?.map { it.pokemon } ?: emptyList()
+                        val filtered = pokemonsByType.filter { it.name.contains(query, ignoreCase = true) }
+                        adapter.submitList(filtered)
+                        if (filtered.isEmpty()) Toast.makeText(this@SearchActivity, "Покемоны не найдены", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                override fun onFailure(call: Call<TypeDetailResponse>, t: Throwable) {
+                    Toast.makeText(this@SearchActivity, "Ошибка загрузки покемонов по типу", Toast.LENGTH_SHORT).show()
+                }
+            })
+        }
     }
 }

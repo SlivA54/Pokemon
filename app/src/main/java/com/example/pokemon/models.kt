@@ -1,0 +1,11 @@
+package com.example.pokemon
+
+
+data class PokemonListResponse(
+    val results: List<PokemonListItem>
+)
+
+data class PokemonListItem(
+    val name: String,
+    val url: String
+)
