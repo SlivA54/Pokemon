@@ -26,24 +26,9 @@ class MainActivity : AppCompatActivity() {
 
         pokeApiService = retrofit.create(PokeApiService::class.java)
 
-        val pokemonName = "pikachu" // Можно заменить на любой другой покемон
 
-        pokeApiService.getPokemon(pokemonName).enqueue(object : Callback<Pokemon> {
-            override fun onResponse(call: Call<Pokemon>, response: Response<Pokemon>) {
-                if (response.isSuccessful) {
-                    val pokemon = response.body()
-                    pokemon?.let {
-                        findViewById<TextView>(R.id.pokemonName).text = it.name
-                        val imageView = findViewById<ImageView>(R.id.pokemonImage)
-                        Picasso.get().load(it.sprites.front_default).into(imageView)
-                    }
-                }
-            }
 
-            override fun onFailure(call: Call<Pokemon>, t: Throwable) {
-                t.printStackTrace()
-            }
-        })
+
         val fab: FloatingActionButton = findViewById(R.id.fab)
         fab.setOnClickListener {
             val intent = Intent(this, SearchActivity::class.java)
