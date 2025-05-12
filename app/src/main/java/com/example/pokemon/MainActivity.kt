@@ -1,10 +1,12 @@
 package com.example.pokemon
 
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.squareup.picasso.Picasso
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
@@ -32,8 +34,6 @@ class MainActivity : AppCompatActivity() {
                     val pokemon = response.body()
                     pokemon?.let {
                         findViewById<TextView>(R.id.pokemonName).text = it.name
-                        findViewById<TextView>(R.id.pokemonHeight).text = "Height: ${it.height}"
-                        findViewById<TextView>(R.id.pokemonWeight).text = "Weight: ${it.weight}"
                         val imageView = findViewById<ImageView>(R.id.pokemonImage)
                         Picasso.get().load(it.sprites.front_default).into(imageView)
                     }
@@ -44,5 +44,10 @@ class MainActivity : AppCompatActivity() {
                 t.printStackTrace()
             }
         })
+        val fab: FloatingActionButton = findViewById(R.id.fab)
+        fab.setOnClickListener {
+            val intent = Intent(this, SearchActivity::class.java)
+            startActivity(intent)
+        }
     }
 }
