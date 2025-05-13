@@ -6,7 +6,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -19,6 +23,11 @@ class PokemonDetailActivity : AppCompatActivity() {
 
     private lateinit var pokeApiService: PokeApiService
 
+    private var currentPokemonId: Int = -1
+    private var currentPokemonName: String = ""
+    private var currentImageUrl: String = ""
+    private var currentTypesString: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pokemon_detail)
@@ -28,9 +37,9 @@ class PokemonDetailActivity : AppCompatActivity() {
         typesTextView = findViewById(R.id.pokemonTypes)
         addButton = findViewById(R.id.btnAdd)
 
-        val id = intent.getIntExtra("pokemon_id", -1)
-        val name = intent.getStringExtra("pokemon_name") ?: "Unknown"
-        nameTextView.text = name.replaceFirstChar { it.uppercase() }
+        currentPokemonId = intent.getIntExtra("pokemon_id", -1)
+        currentPokemonName = intent.getStringExtra("pokemon_name") ?: "Unknown"
+        nameTextView.text = currentPokemonName.replaceFirstChar { it.uppercase() }
 
         val retrofit = Retrofit.Builder()
             .baseUrl("https://pokeapi.co/api/v2/")
@@ -39,20 +48,22 @@ class PokemonDetailActivity : AppCompatActivity() {
 
         pokeApiService = retrofit.create(PokeApiService::class.java)
 
-        if (id != -1) {
-            pokeApiService.getPokemonDetails(id).enqueue(object : Callback<PokemonDetails> {
+        if (currentPokemonId != -1) {
+            pokeApiService.getPokemonDetails(currentPokemonId).enqueue(object : Callback<PokemonDetails> {
                 override fun onResponse(call: Call<PokemonDetails>, response: Response<PokemonDetails>) {
                     if (response.isSuccessful) {
                         val details = response.body()
                         details?.let {
-                            val imageUrl = it.sprites.front_default
-                            val typesString = it.types.joinToString(", ") { typeSlot ->
+                            currentImageUrl = it.sprites.front_default ?: ""
+                            val typesList = it.types.map { typeSlot ->
                                 typeSlot.type.name.replaceFirstChar { c -> c.uppercase() }
                             }
-                            typesTextView.text = typesString
+                            currentTypesString = typesList.joinToString(", ")
+
+                            typesTextView.text = currentTypesString.ifEmpty { "Типы не указаны" }
 
                             Glide.with(this@PokemonDetailActivity)
-                                .load(imageUrl)
+                                .load(currentImageUrl)
                                 .placeholder(android.R.drawable.progress_indeterminate_horizontal)
                                 .error(android.R.drawable.stat_notify_error)
                                 .into(imageView)
@@ -71,8 +82,25 @@ class PokemonDetailActivity : AppCompatActivity() {
         }
 
         addButton.setOnClickListener {
-            // Здесь добавьте логику сохранения покемона, например в базу данных
-            Toast.makeText(this, "$name добавлен", Toast.LENGTH_SHORT).show()
+            if (currentPokemonId == -1) {
+                Toast.makeText(this, "Невозможно сохранить: неверный ID", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val pokemonToSave = SavedPokemon(
+                id = currentPokemonId,
+                name = currentPokemonName,
+                imageUrl = currentImageUrl,
+                types = currentTypesString
+            )
+
+            lifecycleScope.launch {
+                withContext(Dispatchers.IO) {
+                    val db = AppDatabase.getDatabase(this@PokemonDetailActivity)
+                    db.pokemonDao().insert(pokemonToSave)
+                }
+                Toast.makeText(this@PokemonDetailActivity, "$currentPokemonName сохранён", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
