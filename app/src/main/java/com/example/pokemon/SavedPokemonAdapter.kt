@@ -8,7 +8,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
-class SavedPokemonAdapter : RecyclerView.Adapter<SavedPokemonAdapter.ViewHolder>() {
+class SavedPokemonAdapter(
+    private val onItemClick: (SavedPokemon) -> Unit
+) : RecyclerView.Adapter<SavedPokemonAdapter.ViewHolder>() {
 
     private val items = mutableListOf<SavedPokemon>()
 
@@ -18,10 +20,19 @@ class SavedPokemonAdapter : RecyclerView.Adapter<SavedPokemonAdapter.ViewHolder>
         notifyDataSetChanged()
     }
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val imageView: ImageView = view.findViewById(R.id.pokemonImage)
         val nameTextView: TextView = view.findViewById(R.id.pokemonName)
         val typesTextView: TextView = view.findViewById(R.id.pokemonTypes)
+
+        init {
+            view.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onItemClick(items[position])
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

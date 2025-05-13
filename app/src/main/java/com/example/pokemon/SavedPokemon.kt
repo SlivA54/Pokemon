@@ -10,4 +10,3 @@ data class SavedPokemon(
     val imageUrl: String,
     val types: String
 )
-
