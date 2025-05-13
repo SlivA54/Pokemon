@@ -16,8 +16,11 @@ data class TypeItem(
 )
 
 interface PokeApiService {
-    @GET
-    fun getPokemonDetails(@Url url: String): Call<PokemonDetails>
+
+        @GET("pokemon/{id}/")
+        fun getPokemonDetails(@Path("id") id: Int): Call<PokemonDetails>
+
+
 
     @GET("type")
     fun getTypeList(): Call<TypeListResponse>

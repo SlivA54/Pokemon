@@ -8,9 +8,9 @@ import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.appcompat.widget.SearchView
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -32,13 +32,22 @@ class SearchActivity : AppCompatActivity() {
         typeSpinner = findViewById(R.id.typeSpinner)
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
+
         adapter = PokemonAdapter { pokemonItem ->
-            val intent = Intent(this, PokemonDetailActivity::class.java)
-            intent.putExtra("pokemon_url", pokemonItem.url)
-            intent.putExtra("pokemon_name", pokemonItem.name)
+            val id = pokemonItem.url.trimEnd('/').split("/").last()
+            val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
+
+            // В этом примере у PokemonListItem нет типов, если есть - добавьте логику получения и передачи типов
+            val typesString = "Типы не указаны" // или получите из другой модели / запроса
+
+            val intent = Intent(this, PokemonDetailActivity::class.java).apply {
+                putExtra("pokemon_id", id.toInt())
+                putExtra("pokemon_name", pokemonItem.name.replaceFirstChar { it.uppercase() })
+                putExtra("pokemon_image_url", imageUrl)
+                putExtra("pokemon_types", typesString)
+            }
             startActivity(intent)
         }
-        recyclerView.adapter = adapter
 
         recyclerView.adapter = adapter
 
@@ -60,7 +69,6 @@ class SearchActivity : AppCompatActivity() {
             override fun onQueryTextChange(newText: String?) = false
         })
 
-        // Поиск при смене типа
         typeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>, view: View?, position: Int, id: Long
@@ -94,7 +102,6 @@ class SearchActivity : AppCompatActivity() {
         val selectedType = typeSpinner.selectedItem as String
 
         if (selectedType == "Все типы") {
-            // Поиск только по имени среди всех покемонов
             pokeApiService.getPokemonList(1118, 0).enqueue(object : Callback<PokemonListResponse> {
                 override fun onResponse(call: Call<PokemonListResponse>, response: Response<PokemonListResponse>) {
                     if (response.isSuccessful) {
@@ -109,7 +116,6 @@ class SearchActivity : AppCompatActivity() {
                 }
             })
         } else {
-            // Поиск по выбранному типу
             pokeApiService.getPokemonByType(selectedType).enqueue(object : Callback<TypeDetailResponse> {
                 override fun onResponse(call: Call<TypeDetailResponse>, response: Response<TypeDetailResponse>) {
                     if (response.isSuccessful) {

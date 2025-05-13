@@ -23,11 +23,13 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         adapter = SavedPokemonAdapter { pokemon ->
-            val intent = Intent(this, PokemonDetailActivity::class.java)
-            intent.putExtra("pokemon_id", pokemon.id)
-            intent.putExtra("pokemon_name", pokemon.name)
-            intent.putExtra("pokemon_image_url", pokemon.imageUrl)
-            intent.putExtra("pokemon_types", pokemon.types)
+            // При клике формируем Intent и передаём данные покемона
+            val intent = Intent(this, PokemonDetailActivity::class.java).apply {
+                putExtra("pokemon_id", pokemon.id)
+                putExtra("pokemon_name", pokemon.name)
+                putExtra("pokemon_image_url", pokemon.imageUrl)
+                putExtra("pokemon_types", pokemon.types)
+            }
             startActivity(intent)
         }
         recyclerView.adapter = adapter

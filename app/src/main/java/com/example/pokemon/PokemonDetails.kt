@@ -1,6 +1,7 @@
 package com.example.pokemon
 
 data class PokemonDetails(
+    val name: String,
     val sprites: Sprites,
     val types: List<TypeSlot>
 )
@@ -16,3 +17,4 @@ data class TypeSlot(
 data class Type(
     val name: String
 )
+
