@@ -5,7 +5,25 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+    <!-- Заголовок -->
+    <TextView
+        android:id="@+id/headerTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Бестиарий"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:paddingBottom="8dp" />
 
+    <!-- RecyclerView под заголовком -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/savedPokemonsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/headerTitle"
+        android:layout_marginTop="8dp" />
 
     <!-- Кнопка FloatingActionButton справа внизу -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -16,12 +34,6 @@
         android:layout_alignParentEnd="true"
         android:layout_margin="16dp"
         android:contentDescription="Добавить"
-        android:src="@android:drawable/ic_input_add"
-         />
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/savedPokemonsRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
+        android:src="@android:drawable/ic_input_add" />
 
 </RelativeLayout>

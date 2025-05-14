@@ -1,6 +1,7 @@
 package com.example.pokemon
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -40,6 +41,11 @@ class PokemonDetailActivity : AppCompatActivity() {
         currentPokemonId = intent.getIntExtra("pokemon_id", -1)
         currentPokemonName = intent.getStringExtra("pokemon_name") ?: "Unknown"
         nameTextView.text = currentPokemonName.replaceFirstChar { it.uppercase() }
+
+        val showAddButton = intent.getBooleanExtra("show_add_button", true)
+
+        // Управляем видимостью кнопки добавления
+        addButton.visibility = if (showAddButton) View.VISIBLE else View.GONE
 
         val retrofit = Retrofit.Builder()
             .baseUrl("https://pokeapi.co/api/v2/")

@@ -1,6 +1,7 @@
 package com.example.pokemon
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -15,5 +16,8 @@ interface PokemonDao {
 
     @Query("SELECT * FROM saved_pokemons")
     fun getAll(): Flow<List<SavedPokemon>>
+
+    @Delete
+    fun delete(pokemon: SavedPokemon)
 }
 
