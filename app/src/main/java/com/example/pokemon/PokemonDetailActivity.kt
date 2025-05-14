@@ -20,6 +20,11 @@ class PokemonDetailActivity : AppCompatActivity() {
     private lateinit var imageView: ImageView
     private lateinit var nameTextView: TextView
     private lateinit var typesTextView: TextView
+    private lateinit var abilitiesTextView: TextView
+    private lateinit var statsTextView: TextView
+    private lateinit var weightTextView: TextView
+    private lateinit var heightTextView: TextView
+    private lateinit var movesTextView: TextView
     private lateinit var addButton: Button
 
     private lateinit var pokeApiService: PokeApiService
@@ -33,9 +38,15 @@ class PokemonDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pokemon_detail)
 
+        // Инициализация view
         imageView = findViewById(R.id.pokemonImage)
         nameTextView = findViewById(R.id.pokemonName)
         typesTextView = findViewById(R.id.pokemonTypes)
+        abilitiesTextView = findViewById(R.id.abilitiesTextView)
+        statsTextView = findViewById(R.id.statsTextView)
+        weightTextView = findViewById(R.id.weightTextView)
+        heightTextView = findViewById(R.id.heightTextView)
+        movesTextView = findViewById(R.id.movesTextView)
         addButton = findViewById(R.id.btnAdd)
 
         currentPokemonId = intent.getIntExtra("pokemon_id", -1)
@@ -43,8 +54,6 @@ class PokemonDetailActivity : AppCompatActivity() {
         nameTextView.text = currentPokemonName.replaceFirstChar { it.uppercase() }
 
         val showAddButton = intent.getBooleanExtra("show_add_button", true)
-
-        // Управляем видимостью кнопки добавления
         addButton.visibility = if (showAddButton) View.VISIBLE else View.GONE
 
         val retrofit = Retrofit.Builder()
@@ -61,21 +70,49 @@ class PokemonDetailActivity : AppCompatActivity() {
                         val details = response.body()
                         details?.let {
                             currentImageUrl = it.sprites.front_default ?: ""
-                            val typesList = it.types.map { typeSlot ->
-                                typeSlot.type.name.replaceFirstChar { c -> c.uppercase() }
-                            }
-                            currentTypesString = typesList.joinToString(", ")
 
-                            typesTextView.text = currentTypesString.ifEmpty { "Типы не указаны" }
-
+                            // Изображение
                             Glide.with(this@PokemonDetailActivity)
                                 .load(currentImageUrl)
                                 .placeholder(android.R.drawable.progress_indeterminate_horizontal)
                                 .error(android.R.drawable.stat_notify_error)
                                 .into(imageView)
+
+                            // Имя
+                            nameTextView.text = it.name.replaceFirstChar { c -> c.uppercase() }
+
+                            // Типы
+                            val typesList = it.types.map { typeSlot ->
+                                typeSlot.type.name.replaceFirstChar { c -> c.uppercase() }
+                            }
+                            currentTypesString = typesList.joinToString(", ")
+                            typesTextView.text = currentTypesString
+
+                            // Способности
+                            val abilitiesString = it.abilities.joinToString(", ") { abilitySlot ->
+                                abilitySlot.ability.name.replaceFirstChar { c -> c.uppercase() } +
+                                        if (abilitySlot.is_hidden) " (Скрытая)" else ""
+                            }
+                            abilitiesTextView.text = abilitiesString
+
+                            // Статы
+                            val statsString = it.stats.joinToString("\n") { statSlot ->
+                                "${statSlot.stat.name.replaceFirstChar { c -> c.uppercase() }}: ${statSlot.base_stat}"
+                            }
+                            statsTextView.text = statsString
+
+                            // Вес и рост
+                            weightTextView.text = "Вес: ${it.weight / 10.0} кг"
+                            heightTextView.text = "Рост: ${it.height / 10.0} м"
+
+                            // Движения (первые 5)
+                            val movesString = it.moves.take(5).joinToString(", ") { moveSlot ->
+                                moveSlot.move.name.replaceFirstChar { c -> c.uppercase() }
+                            }
+                            movesTextView.text = movesString
                         }
                     } else {
-                        typesTextView.text = "Не удалось загрузить типы"
+                        typesTextView.text = "Не удалось загрузить данные"
                     }
                 }
 
