@@ -1,4 +1,4 @@
-package com.example.pokemon
+package com.example.pokemon.presentation
 
 data class PokemonDetails(
     val id: Int,

@@ -1,10 +1,12 @@
-package com.example.pokemon
+package com.example.pokemon.data
 
+import com.example.pokemon.presentation.PokemonDetails
+import com.example.pokemon.presentation.PokemonListItem
+import com.example.pokemon.presentation.PokemonListResponse
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
-import retrofit2.http.Url
 
 data class TypeListResponse(
     val results: List<TypeItem>

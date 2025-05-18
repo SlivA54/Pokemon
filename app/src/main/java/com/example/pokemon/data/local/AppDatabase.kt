@@ -1,9 +1,10 @@
-package com.example.pokemon
+package com.example.pokemon.data.local
 
-import androidx.room.Database
 import androidx.room.Room
-import androidx.room.RoomDatabase
 import android.content.Context
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import kotlin.jvm.java
 
 @Database(entities = [SavedPokemon::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {

@@ -1,4 +1,4 @@
-package com.example.pokemon
+package com.example.pokemon.presentation
 
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +7,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.pokemon.R
+import kotlin.collections.last
+import kotlin.text.replaceFirstChar
+import kotlin.text.split
+import kotlin.text.trimEnd
+import kotlin.text.uppercase
 
 class PokemonAdapter(
     private val onItemClick: (PokemonListItem) -> Unit

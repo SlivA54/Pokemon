@@ -1,4 +1,4 @@
-package com.example.pokemon
+package com.example.pokemon.presentation
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,11 +6,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.pokemon.R
+import com.example.pokemon.SavedPokemonAdapter
+import com.example.pokemon.data.local.AppDatabase
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.apply
+import kotlin.jvm.java
 
 class MainActivity : AppCompatActivity() {
 

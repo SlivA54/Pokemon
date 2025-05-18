@@ -1,4 +1,4 @@
-package com.example.pokemon
+package com.example.pokemon.presentation
 
 import android.os.Bundle
 import android.view.View
@@ -9,11 +9,22 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.example.pokemon.R
+import com.example.pokemon.data.PokeApiService
+import com.example.pokemon.data.local.AppDatabase
+import com.example.pokemon.data.local.SavedPokemon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
+import kotlin.collections.joinToString
+import kotlin.collections.map
+import kotlin.collections.take
+import kotlin.jvm.java
+import kotlin.let
+import kotlin.text.replaceFirstChar
+import kotlin.text.uppercase
 
 class PokemonDetailActivity : AppCompatActivity() {
 

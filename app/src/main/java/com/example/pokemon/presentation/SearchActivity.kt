@@ -1,4 +1,4 @@
-package com.example.pokemon
+package com.example.pokemon.presentation
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,8 +11,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.pokemon.R
+import com.example.pokemon.data.PokeApiService
+import com.example.pokemon.data.TypeDetailResponse
+import com.example.pokemon.data.TypeListResponse
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
+import kotlin.apply
+import kotlin.collections.filter
+import kotlin.collections.last
+import kotlin.collections.map
+import kotlin.jvm.java
+import kotlin.text.contains
+import kotlin.text.lowercase
+import kotlin.text.replaceFirstChar
+import kotlin.text.split
+import kotlin.text.toInt
+import kotlin.text.trim
+import kotlin.text.trimEnd
+import kotlin.text.uppercase
 
 class SearchActivity : AppCompatActivity() {
 
@@ -35,7 +52,8 @@ class SearchActivity : AppCompatActivity() {
 
         adapter = PokemonAdapter { pokemonItem ->
             val id = pokemonItem.url.trimEnd('/').split("/").last()
-            val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
+            val imageUrl =
+                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$id.png"
 
             // В этом примере у PokemonListItem нет типов, если есть - добавьте логику получения и передачи типов
             val typesString = "Типы не указаны" // или получите из другой модели / запроса
@@ -87,7 +105,11 @@ class SearchActivity : AppCompatActivity() {
                     allTypes.clear()
                     allTypes.add("Все типы") // опция без фильтра по типу
                     allTypes.addAll(response.body()?.results?.map { it.name } ?: emptyList())
-                    val adapterSpinner = ArrayAdapter(this@SearchActivity, android.R.layout.simple_spinner_item, allTypes)
+                    val adapterSpinner = ArrayAdapter(
+                        this@SearchActivity,
+                        android.R.layout.simple_spinner_item,
+                        allTypes
+                    )
                     adapterSpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
                     typeSpinner.adapter = adapterSpinner
                 }
